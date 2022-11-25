@@ -81,7 +81,6 @@ def extract_raw_images_features( image_dir, feature_extractor ):
 
 model_path = os.path.join( models_dir, "1_baseline_1280.pt" )
 yolov5_feature_extractor = YOLOv5FeatureExtractor( model_path, input_size=(1280, 1280), device="cuda", cutoff=None )
-#yolov5_feature_extractor = YOLOv5FeatureExtractor( model_path, input_size=(1280, 1280), device="cuda", cutoff=13 )
 #yolov5_feature_extractor = ImageFeatureExtractor()
 #image_features = extract_raw_images_features(raw_image_dir, yolov5_feature_extractor)
 image_features = extract_cached_images_features(train_cache_dir, yolov5_feature_extractor)

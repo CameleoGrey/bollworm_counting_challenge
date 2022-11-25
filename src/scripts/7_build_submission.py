@@ -27,8 +27,10 @@ submission_path = os.path.join(submissions_dir, "0_baseline_640.csv")
 submission_df.to_csv( submission_path, index=False )"""
 ########################################
 
+
 ########################################
-"""bollworm_counter = bollworm_counter = load( os.path.join(models_dir, "first_order_bollworm_counter_1280.pkl") )
+"""model_path = os.path.join( models_dir, "1_baseline_1280.pt" )
+bollworm_counter = OptimalBollwormCounter( model_path, device="cuda" )
 test_df = pd.read_csv(os.path.join( data_dir, "Test.csv" ))
 
 bollworm_counter.cache_scaled_test_df(test_df, test_cache_dir, raw_image_dir, target_image_size=(1280, 1280))
@@ -37,21 +39,36 @@ submission_df = bollworm_counter.build_submission_on_cached_test(test_cache_dir,
                                                                  use_hyperparams_predictor=False, 
                                                                  verbose_progress=True, 
                                                                  verbose_metrics=True)
-submission_path = os.path.join(submissions_dir, "1_first_order_optimization_1280.csv")
+submission_path = os.path.join(submissions_dir, "1_first_order_optimization_reverted_weights_1280.csv")
+submission_df.to_csv( submission_path, index=False )"""
+
+########################################
+
+########################################
+"""bollworm_counter = bollworm_counter = load( os.path.join(models_dir, "first_order_bollworm_counter_1280_clean.pkl") )
+test_df = pd.read_csv(os.path.join( data_dir, "Test.csv" ))
+
+#bollworm_counter.cache_scaled_test_df(test_df, test_cache_dir, raw_image_dir, target_image_size=(1280, 1280))
+
+submission_df = bollworm_counter.build_submission_on_cached_test(test_cache_dir, 
+                                                                 use_hyperparams_predictor=False, 
+                                                                 verbose_progress=True, 
+                                                                 verbose_metrics=True)
+submission_path = os.path.join(submissions_dir, "1_first_order_optimization_1280_clean.csv")
 submission_df.to_csv( submission_path, index=False )"""
 ########################################
 
 ########################################
-bollworm_counter = load( os.path.join(models_dir, "second_order_bollworm_counter_1280.pkl") )
+bollworm_counter = load( os.path.join(models_dir, "second_order_bollworm_counter_1280_clean.pkl") )
 test_df = pd.read_csv(os.path.join( data_dir, "Test.csv" ))
 
-bollworm_counter.cache_scaled_test_df(test_df, test_cache_dir, raw_image_dir, target_image_size=(1280, 1280))
+#bollworm_counter.cache_scaled_test_df(test_df, test_cache_dir, raw_image_dir, target_image_size=(1280, 1280))
 
 submission_df = bollworm_counter.build_submission_on_cached_test(test_cache_dir, 
                                                                  use_hyperparams_predictor=True, 
                                                                  verbose_progress=True, 
                                                                  verbose_metrics=True)
-submission_path = os.path.join(submissions_dir, "1_second_order_optimization_1280.csv")
+submission_path = os.path.join(submissions_dir, "1_second_order_optimization_1280_weighted_mixup_02_3000_clean_partial_adaptive.csv")
 submission_df.to_csv( submission_path, index=False )
 ########################################
 

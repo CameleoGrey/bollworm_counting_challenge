@@ -153,6 +153,7 @@ class DatasetBuilder_YOLOv5():
     def tv_split_dfs_(self, df, val_part, random_seed):
         
         unique_image_ids = np.array(list(set(df["image_id_worm"].to_numpy())))
+        unique_image_ids = np.sort( unique_image_ids )
         
         sample_ids = [i for i in range(len(unique_image_ids))]
         np.random.seed(random_seed)

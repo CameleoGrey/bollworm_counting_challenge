@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from classes.paths_config import *
 from classes.utils import *
 import subprocess
+from yolov5 import train
 
 
 #########################################################################
@@ -45,7 +46,7 @@ optimizer = "SGD"
 
 #########################################################################
 # m6 1280
-dataset_path = os.path.join(data_dir, "raw_bollworm_1280")
+dataset_path = os.path.join(data_dir, "clean_bollworm_1280")
 dataset_config_path = os.path.join(dataset_path, "dataset_config.yaml")
 image_size = 1280
 batch_size = 6

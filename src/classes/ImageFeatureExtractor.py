@@ -31,7 +31,6 @@ class ImageFeatureExtractor():
     def extract_features(self, image):
         
         image = deepcopy( image )
-        
         self.model.eval()
         
         preprocessed_image = self.transforms(image).unsqueeze(0)

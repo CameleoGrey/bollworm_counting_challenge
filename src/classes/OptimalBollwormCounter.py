@@ -17,6 +17,7 @@ from classes.ImageFeatureExtractor import ImageFeatureExtractor
 from classes.HyperparametersPredictor import HyperparametersPredictor
 from classes.utils import *
 from classes.BollwormTrigger import BollwormTrigger
+from classes.NNHPPredictor import NNHPPredictor
 
 import optuna
 
@@ -34,10 +35,10 @@ class OptimalBollwormCounter():
         # they will be changed to optimal for a specific model
         # MAE on Train: 2.043031734620566 for baseline_640 small
         # MAE on Train: 1.8932936222656396 for baseline_1280 medium
-        """self.confidence_abw = 0.6378657652915113
-        self.confidence_pbw = 0.3474196511069118
-        self.iou_threshold_abw = 0.45811383417801216
-        self.iou_threshold_pbw = 0.37197818697111884
+        """self.confidence_abw = 0.6601263387097805
+        self.confidence_pbw = 0.3864052508358511
+        self.iou_threshold_abw = 0.3977171502747005
+        self.iou_threshold_pbw = 0.297381323529126
         self.max_det_abw = 392
         self.max_det_pbw = 574"""
         
@@ -77,8 +78,8 @@ class OptimalBollwormCounter():
             confidence_pbw = trial.suggest_float( "confidence_pbw", 0.05, 0.95 )
             iou_threshold_abw = trial.suggest_float( "iou_threshold_abw", 0.05, 0.95 )
             iou_threshold_pbw = trial.suggest_float( "iou_threshold_pbw", 0.05, 0.95 )
-            max_det_abw = trial.suggest_int( "max_det_abw", 5, 600 )
-            max_det_pbw = trial.suggest_int( "max_det_pbw", 5, 600 )
+            max_det_abw = trial.suggest_int( "max_det_abw", 5, 1000 )
+            max_det_pbw = trial.suggest_int( "max_det_pbw", 5, 1000 )
             
 
             y_preds = self.extract_class_counts_(raw_predicts, 
@@ -240,7 +241,6 @@ class OptimalBollwormCounter():
         #cached_samples_names = cached_samples_names[:100]
         ##########
         
-        score_mae = 0.0
         n_images = len(cached_samples_names)
         
         progress_bar = None
@@ -254,6 +254,7 @@ class OptimalBollwormCounter():
         target_infos = []
         trial_scores = []
         image_ids = []
+        raw_predicts = []
         default_hyperparameters = [self.confidence_abw, self.iou_threshold_abw, self.max_det_abw,
                                    self.confidence_pbw, self.iou_threshold_pbw, self.max_det_pbw]
         
@@ -275,9 +276,12 @@ class OptimalBollwormCounter():
                                       preprocess_image=False,
                                       target_image_size = None, 
                                       use_hyperparams_predictor=False)
+                raw_pred = self.get_raw_predict_(image, preprocess_image=False, target_image_size=None)
             except Exception as e:
                 print(e)
                 continue
+            
+            raw_predicts.append( raw_pred )
             
             abw_delta = np.abs( y_true["abw"] - y_pred["abw"] )
             pbw_delta = np.abs( y_true["pbw"] - y_pred["pbw"] )
@@ -310,7 +314,8 @@ class OptimalBollwormCounter():
         default_hyperparameters = np.array( default_hyperparameters )
         trial_scores = np.array( trial_scores )
         image_ids = np.array(image_ids)
-        second_order_dataset = [ image_net_features, target_hyperparameters, target_infos, trial_scores, default_hyperparameters, image_ids ]
+        raw_predicts = np.array(raw_predicts)
+        second_order_dataset = [ image_net_features, target_hyperparameters, target_infos, trial_scores, default_hyperparameters, image_ids, raw_predicts ]
                 
         return second_order_dataset
     
@@ -380,15 +385,17 @@ class OptimalBollwormCounter():
         
         return situation_optimal_parameters, median_trial_score
     
-    def second_order_hyperparameters_optimization(self, second_order_dataset, n_jobs=8, random_seed=45 ):
+    def second_order_hyperparameters_optimization(self, second_order_dataset, train_cache_dir, n_jobs=8, random_seed=45 ):
         
         #self.bollworm_trigger = BollwormTrigger()
         #self.bollworm_trigger.fit( second_order_dataset )
         
         self.hyper_parameters_predictor = HyperparametersPredictor(n_jobs=n_jobs, 
                                                                    random_seed=random_seed)
-        
         self.hyper_parameters_predictor.fit(second_order_dataset)
+        
+        #self.hyper_parameters_predictor = NNHPPredictor()
+        #self.hyper_parameters_predictor.fit(second_order_dataset, train_cache_dir, batch_size=8, epochs = 50, learning_rate = 0.0001)
         
         
         return self
@@ -402,6 +409,8 @@ class OptimalBollwormCounter():
     
     
     def predict(self, image, preprocess_image, target_image_size=(640, 640), use_hyperparams_predictor=False):
+        
+        self.model.eval()
         
         abw_parameters = [self.confidence_abw, self.iou_threshold_abw, self.max_det_abw]
         pbw_parameters = [self.confidence_pbw, self.iou_threshold_pbw, self.max_det_pbw]
@@ -420,6 +429,10 @@ class OptimalBollwormCounter():
             #    return class_counts
             
             situation_hyperparams = self.hyper_parameters_predictor.predict(situation_features)
+            
+            #situation_hyperparams = self.hyper_parameters_predictor.predict(image)
+            
+            
             abw_parameters = situation_hyperparams[:3]
             pbw_parameters = situation_hyperparams[3:]
         
